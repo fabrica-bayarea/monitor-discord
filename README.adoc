@@ -1,0 +1,119 @@
+= Deploy do Projeto monitor-discord em um Servidor CentOS usando systemctl
+
+[abstract]
+Este tutorial explica como fazer o deploy de um projeto monitor-discord em um servidor CentOS usando systemctl para iniciar o serviço=== Ele também inclui instruções para instalar o monitor-discord no diretório /opt, criar um usuário de serviço chamado IESBOT e configurar o serviço systemd.
+
+[WARNING]
+====
+Para efetuar a configuração do projeto, copie o arquivo config.json.exemple configure de acordo com o bot criado usando o link como base o link https://discordjs.guide/preparations/setting-up-a-bot-application.html
+====
+
+== Pré-requisitos
+
+- Um servidor CentOS configurado e acessível.
+- Acesso de root ou um usuário com privilégios de sudo no servidor.
+
+== Passo 1: Instalar o monitor-discord
+
+=== No servidor CentOS, abra um terminal.
+
+=== Execute o seguinte comando para instalar o monitor-discord usando o gerenciador de pacotes yum:
+
+[source,bash]
+----
+sudo yum install -y nodejs
+----
+
+== Passo 2: Transferir o Projeto
+
+=== Transfira o projeto do github para o servidor
+
+[source,bash]
+----
+git clone https://github.com/fabrica-bayarea/monitor-discord.git
+----
+
+=== Mova o projeto para o diretório /opt no servidor:
+
+[source,bash]
+----
+sudo mv /caminho/do/projeto /opt/
+----
+
+Substitua `/caminho/do/projeto` pelo caminho completo para o diretório do seu projeto.
+
+== Passo 3: Configurar o Ambiente
+
+=== No diretório do projeto, instale as dependências do monitor-discord executando o comando:
+
+[source,bash]
+----
+npm install
+----
+
+=== Verifique se o seu aplicativo monitor-discord está funcionando corretamente, iniciando-o manualmente com o comando:
+
+[source,bash]
+----
+node index.js
+----
+
+Certifique-se de substituir `index.js` pelo nome do arquivo principal do seu projeto.
+
+== Passo 4: Criar um Usuário de Serviço
+
+=== No servidor CentOS, execute o seguinte comando para criar um usuário chamado `botiesb`:
+
+[source,bash]
+----
+sudo useradd -r -s /bin/nologin botiesb
+----
+
+=== Conseda a permição para o user botiesb no projeto:
+
+[source,bash]
+----
+chown -Rf  botiesb: /opt/<projeto-bot-monitor>
+----
+
+== Passo 5: Configurar o serviço systemd
+
+=== No servidor CentOS, abra um editor de texto de sua escolha (como vi ou nano) e crie um arquivo de serviço chamado `botmonitor.service` em `/etc/systemd/system/` com o seguinte conteúdo:
+
+[source]
+----
+[Unit]
+Description=Bot iesb
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /opt/<projeto-bot-monitor>/index.js
+WorkingDirectory=/opt/<projeto-bot-monitor>
+Restart=always
+User=botiesb
+
+[Install]
+WantedBy=multi-user.target
+----
+
+Certifique-se de substituir `/opt/<projeto-bot-monitor>/index.js` pelo caminho completo para o arquivo principal do seu projeto e `/opt/caminho/para/o/diretorio/do/projeto` pelo caminho completo para o diretório do seu projeto.
+
+=== Salve e feche o arquivo.
+
+== Passo 6: Configurar e Iniciar o Serviço
+
+=== No terminal, execute o seguinte comando para recarregar as configurações do systemd:
+
+[source,bash]
+----
+sudo systemctl daemon-reload
+----
+
+=== Inicie o serviço usando o systemctl:
+
+[source,bash]
+----
+sudo systemctl enable --now botmonitor
+----
+
+O comando acima iniciará o serviço `botmonitor` definido anteriormente.
